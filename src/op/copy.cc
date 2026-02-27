@@ -1212,6 +1212,17 @@ Stmt CopyNode::LowerBulkCopy(const LowerArgs &T, arith::Analyzer *analyzer,
 
   // Global Tensor Shape and Stride
   desc.global_addr = global_tensor->data;
+  desc.descriptor_name_hint = global_tensor->name;
+  if (global_tensor->elem_offset.defined() &&
+      !is_zero(global_tensor->elem_offset)) {
+    PrimExpr byte_offset =
+        global_tensor->elem_offset * IntImm(global_tensor->elem_offset.dtype(),
+                                            global_tensor->dtype.bytes());
+    desc.global_addr =
+        Call(DataType::Handle(), builtin::handle_add_byte_offset(),
+             {global_tensor->data, byte_offset});
+    desc.descriptor_name_hint = global_tensor->name + "_offset";
+  }
   desc.global_shape = ReverseArray(global_tensor->shape);
   Array<PrimExpr> global_coords =
       ReverseArray(global_range.Map([](Range r) { return r->min; }));
@@ -1531,7 +1542,7 @@ Stmt CopyNode::LowerBulkCopy1D(const LowerArgs &T, arith::Analyzer *analyzer,
 // create_tma_descriptor().
 Array<PrimExpr> TMADesc::EncodeCallArgs() const {
   Array<PrimExpr> args;
-  args.reserve(rank * 4 + 7);
+  args.reserve(rank * 4 + 8);
 
   args.push_back(data_type);
   args.push_back(static_cast<int>(rank));
@@ -1548,6 +1559,7 @@ Array<PrimExpr> TMADesc::EncodeCallArgs() const {
   args.push_back(swizzle);
   args.push_back(l2_promotion);
   args.push_back(oob_fill);
+  args.push_back(StringImm(descriptor_name_hint));
 
   return args;
 }
@@ -1597,6 +1609,7 @@ Stmt Conv2DIm2ColOpNode::Lower(const LowerArgs &T,
   desc.rank = src_->shape.size();
   desc.data_type = to_CUtensorMapDataType(src_->dtype);
   desc.global_addr = src_->data;
+  desc.descriptor_name_hint = src_->name;
   desc.global_shape = ReverseArray(src_->shape);
 
   if (!src_->strides.empty()) {
@@ -1720,6 +1733,7 @@ Array<PrimExpr> TMAIm2ColDesc::EncodeCallArgs() const {
   args.push_back(swizzle);
   args.push_back(l2_promotion);
   args.push_back(oob_fill);
+  args.push_back(StringImm(descriptor_name_hint));
 
   return args;
 }

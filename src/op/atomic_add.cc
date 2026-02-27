@@ -384,6 +384,7 @@ Stmt AtomicAddNode::Lower(const LowerArgs &T, arith::Analyzer *analyzer) const {
 
     // Global tensor shape and stride
     desc.global_addr = global_tensor->data;
+    desc.descriptor_name_hint = global_tensor->name;
     desc.global_shape = ReverseArray(global_tensor->shape);
     Array<PrimExpr> global_coords =
         ReverseArray(global_range.Map([](Range r) { return r->min; }));

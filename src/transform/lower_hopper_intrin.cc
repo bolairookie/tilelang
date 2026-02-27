@@ -196,7 +196,7 @@ public:
       if (iter != desc_map_.end()) {
         var = iter->second;
       } else {
-        String name = call->args[2].as<Var>().value()->name_hint;
+        String name = call->args.back().as<StringImmNode>()->value;
         var = Var(name + "_desc",
                   PointerType(PrimType(cuTensorMapType()), "grid_constant"));
         desc_map_[tvm::ffi::GetRef<Call>(call)] = var;

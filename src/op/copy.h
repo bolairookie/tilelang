@@ -67,6 +67,7 @@ struct TMADesc {
   int interleave;                ///< Memory interleave parameter
   int oob_fill;                  ///< Out-of-bound fill policy
   int l2_promotion;              ///< L2 cache promotion flag
+  String descriptor_name_hint;   ///< Name hint for kernel param (e.g. "C_offset")
 
   /// Encode descriptor fields into runtime call arguments
   Array<PrimExpr> EncodeCallArgs() const;
@@ -95,6 +96,7 @@ struct TMAIm2ColDesc {
   int interleave;               // Memory interleaving setting
   int oob_fill;                 // Out-of-bound fill policy
   int l2_promotion;             // Whether to enable L2 cache promotion
+  String descriptor_name_hint;  ///< Name hint for kernel param
 
   /*!
    * \brief Encode descriptor fields into runtime arguments.

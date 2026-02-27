@@ -53,7 +53,7 @@ struct TensorMapArgs {
     T.tensorRank = static_cast<cuuint32_t>(args[idx++].cast<int64_t>());
     T.globalAddress = args[idx++].cast<void *>();
     ICHECK(T.tensorRank >= 1 && T.tensorRank <= 5);
-    ICHECK(args.size() == static_cast<int>(8 + T.tensorRank * 4));
+    ICHECK(args.size() == static_cast<int>(9 + T.tensorRank * 4));
     for (size_t i = 0; i < T.tensorRank; i++) {
       T.globalDim[i] = args[idx++].cast<cuuint64_t>();
     }
@@ -137,7 +137,7 @@ struct TensorMapIm2ColArgs {
     T.tensorRank = static_cast<cuuint32_t>(args[idx++].cast<int64_t>());
     T.globalAddress = args[idx++].cast<void *>();
     ICHECK(T.tensorRank >= 3 && T.tensorRank <= 5);
-    ICHECK(args.size() == static_cast<int>(6 + T.tensorRank * 5));
+    ICHECK(args.size() == static_cast<int>(7 + T.tensorRank * 5));
     for (size_t i = 0; i < T.tensorRank; i++) {
       T.globalDim[i] = args[idx++].cast<cuuint64_t>();
     }

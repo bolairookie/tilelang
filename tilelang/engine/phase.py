@@ -218,12 +218,11 @@ def LowerAndLegalize(mod: IRModule, target: Target) -> IRModule:
 
 def OptimizeForTarget(mod: IRModule, target: Target) -> IRModule:
     pass_ctx = tilelang.transform.get_pass_context()
-    # Lower the shared.barrier into specific initialization slot
+    # Lower the shared.barrier and shared.cluster_barrier into specific initialization slot
     mod = tilelang.transform.LowerSharedBarrier()(mod)
     # Lower the shared.tmem into specific initialization slot
     mod = tilelang.transform.LowerSharedTmem()(mod)
     # which may be introduced by the LegalizeSafeMemoryAccess
-    #
     # Note: The WarpSpecialized + InjectTmaBarrier pipeline is required for correct TMA lowering
     # (mbarrier allocation/init + expect_tx injection) even when warp specialization is disabled.
     if allow_tma_lower(pass_ctx=pass_ctx, target=target):
@@ -245,8 +244,9 @@ def OptimizeForTarget(mod: IRModule, target: Target) -> IRModule:
         mod = tilelang.transform.PlanAndUpdateBufferAllocationLocation()(mod)
         mod = tilelang.transform.PipelinePlanning()(mod)
         mod = tilelang.transform.InjectSoftwarePipeline()(mod)
-
     mod = tilelang.transform.LowerOpaqueBlock()(mod)
+    mod = tilelang.transform.Simplify()(mod)
+    mod = tilelang.transform.OptimizeCPAsyncSync()(mod)
     mod = tilelang.transform.Simplify()(mod)
     mod = tir.transform.NarrowDataType(32)(mod)
     mod = tilelang.transform.FlattenBuffer()(mod)
@@ -303,9 +303,7 @@ def OptimizeForTarget(mod: IRModule, target: Target) -> IRModule:
     mod = tilelang.transform.ThreadSync("shared")(mod)
     mod = tilelang.transform.ThreadSync("shared.dyn")(mod)
     mod = tilelang.transform.MergeIfStmt()(mod)
-    # Inject PTX async copy must behind the thread sync pass
-    # as ptx async copy won't be recognized as a valid buffer load
-    mod = tilelang.transform.InjectPTXAsyncCopy()(mod)
+    # NOTE: LowerPTXAsyncCopy is applied earlier (before PipelinePlanning).
     if allow_tma_and_warp_specialized(pass_ctx=pass_ctx, target=target):
         mod = tilelang.transform.AnnotateWarpGroupRegAlloc()(mod)
     mod = tilelang.transform.MakePackedAPI()(mod)
